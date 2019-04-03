@@ -924,18 +924,27 @@ static void quirk_usb_disable_ehci(struct pci_dev *pdev)
 	if (!mmio_resource_enabled(pdev, 0))
 		return;
 
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
+
 	base = pci_ioremap_bar(pdev, 0);
 	if (base == NULL)
 		return;
 
+  pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
+
 	cap_length = readb(base);
 	op_reg_base = base + cap_length;
+
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
 
 	/* EHCI 0.96 and later may have "extended capabilities"
 	 * spec section 5.1 explains the bios handoff, e.g. for
 	 * booting from USB disk or using a usb keyboard
 	 */
 	hcc_params = readl(base + EHCI_HCC_PARAMS);
+
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
+
 	offset = (hcc_params >> 8) & 0xff;
 	while (offset && --count) {
 		pci_read_config_dword(pdev, offset, &cap);
@@ -953,6 +962,9 @@ static void quirk_usb_disable_ehci(struct pci_dev *pdev)
 		}
 		offset = (cap >> 8) & 0xff;
 	}
+
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
+
 	if (!count)
 		dev_printk(KERN_DEBUG, &pdev->dev, "EHCI: capability loop?\n");
 
@@ -979,6 +991,7 @@ static void quirk_usb_disable_ehci(struct pci_dev *pdev)
 	writel(0, op_reg_base + EHCI_USBINTR);
 	writel(0x3f, op_reg_base + EHCI_USBSTS);
 
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
 	iounmap(base);
 }
 
@@ -1138,8 +1151,12 @@ static void quirk_usb_handoff_xhci(struct pci_dev *pdev)
 	int timeout;
 	int len = pci_resource_len(pdev, 0);
 
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
+
 	if (!mmio_resource_enabled(pdev, 0))
 		return;
+
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
 
 	base = ioremap_nocache(pci_resource_start(pdev, 0), len);
 	if (base == NULL)
@@ -1151,8 +1168,12 @@ static void quirk_usb_handoff_xhci(struct pci_dev *pdev)
 	 */
 	ext_cap_offset = xhci_find_next_ext_cap(base, 0, XHCI_EXT_CAPS_LEGACY);
 
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
+
 	if (!ext_cap_offset)
 		goto hc_init;
+
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
 
 	if ((ext_cap_offset + sizeof(val)) > len) {
 		/* We're reading garbage from the controller */
@@ -1161,6 +1182,8 @@ static void quirk_usb_handoff_xhci(struct pci_dev *pdev)
 	}
 	val = readl(base + ext_cap_offset);
 
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
+
 	/* Auto handoff never worked for these devices. Force it and continue */
 	if ((pdev->vendor == PCI_VENDOR_ID_TI && pdev->device == 0x8241) ||
 			(pdev->vendor == PCI_VENDOR_ID_RENESAS
@@ -1168,6 +1191,8 @@ static void quirk_usb_handoff_xhci(struct pci_dev *pdev)
 		val = (val | XHCI_HC_OS_OWNED) & ~XHCI_HC_BIOS_OWNED;
 		writel(val, base + ext_cap_offset);
 	}
+
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
 
 	/* If the BIOS owns the HC, signal that the OS wants it, and wait */
 	if (val & XHCI_HC_BIOS_OWNED) {
@@ -1186,6 +1211,8 @@ static void quirk_usb_handoff_xhci(struct pci_dev *pdev)
 		}
 	}
 
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
+
 	val = readl(base + ext_cap_offset + XHCI_LEGACY_CONTROL_OFFSET);
 	/* Mask off (turn off) any enabled SMIs */
 	val &= XHCI_LEGACY_DISABLE_SMI;
@@ -1194,11 +1221,15 @@ static void quirk_usb_handoff_xhci(struct pci_dev *pdev)
 	/* Disable any BIOS SMIs and clear all SMI events*/
 	writel(val, base + ext_cap_offset + XHCI_LEGACY_CONTROL_OFFSET);
 
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
+
 hc_init:
 	if (pdev->vendor == PCI_VENDOR_ID_INTEL)
 		usb_enable_intel_xhci_ports(pdev);
 
 	op_reg_base = base + XHCI_HC_LENGTH(readl(base));
+
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
 
 	/* Wait for the host controller to be ready before writing any
 	 * operational or runtime registers.  Wait 5 seconds and no more.
@@ -1213,10 +1244,14 @@ hc_init:
 			 val);
 	}
 
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
+
 	/* Send the halt and disable interrupts command */
 	val = readl(op_reg_base + XHCI_CMD_OFFSET);
 	val &= ~(XHCI_CMD_RUN | XHCI_IRQS);
 	writel(val, op_reg_base + XHCI_CMD_OFFSET);
+
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
 
 	/* Wait for the HC to halt - poll every 125 usec (one microframe). */
 	timeout = handshake(op_reg_base + XHCI_STS_OFFSET, XHCI_STS_HALT, 1,
@@ -1227,6 +1262,8 @@ hc_init:
 			 "xHCI HW did not halt within %d usec status = 0x%x\n",
 			 XHCI_MAX_HALT_USEC, val);
 	}
+
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
 
 iounmap:
 	iounmap(base);
@@ -1245,11 +1282,16 @@ static void quirk_usb_early_handoff(struct pci_dev *pdev)
 			pdev->class != PCI_CLASS_SERIAL_USB_XHCI)
 		return;
 
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
+
 	if (pci_enable_device(pdev) < 0) {
 		dev_warn(&pdev->dev,
 			 "Can't enable PCI device, BIOS handoff failed.\n");
 		return;
 	}
+
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
+
 	if (pdev->class == PCI_CLASS_SERIAL_USB_UHCI)
 		quirk_usb_handoff_uhci(pdev);
 	else if (pdev->class == PCI_CLASS_SERIAL_USB_OHCI)
