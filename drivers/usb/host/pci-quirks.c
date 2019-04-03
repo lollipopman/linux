@@ -846,6 +846,8 @@ static void ehci_bios_handoff(struct pci_dev *pdev,
 {
 	int try_handoff = 1, tried_handoff = 0;
 
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
+
 	/*
 	 * The Pegatron Lucid tablet sporadically waits for 98 seconds trying
 	 * the handoff on its unused controller.  Skip it.
@@ -882,6 +884,8 @@ static void ehci_bios_handoff(struct pci_dev *pdev,
 		pci_write_config_byte(pdev, offset + 3, 1);
 	}
 
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
+
 	/* if boot firmware now owns EHCI, spin till it hands it over. */
 	if (try_handoff) {
 		int msec = 1000;
@@ -892,6 +896,8 @@ static void ehci_bios_handoff(struct pci_dev *pdev,
 			pci_read_config_dword(pdev, offset, &cap);
 		}
 	}
+
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
 
 	if (cap & EHCI_USBLEGSUP_BIOS) {
 		/* well, possibly buggy BIOS... try to shut it down,
@@ -907,11 +913,15 @@ static void ehci_bios_handoff(struct pci_dev *pdev,
 	/* just in case, always disable EHCI SMIs */
 	pci_write_config_dword(pdev, offset + EHCI_USBLEGCTLSTS, 0);
 
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
+
 	/* If the BIOS ever owned the controller then we can't expect
 	 * any power sessions to remain intact.
 	 */
 	if (tried_handoff)
 		writel(0, op_reg_base + EHCI_CONFIGFLAG);
+
+	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
 }
 
 static void quirk_usb_disable_ehci(struct pci_dev *pdev)
@@ -949,8 +959,11 @@ static void quirk_usb_disable_ehci(struct pci_dev *pdev)
 	while (offset && --count) {
 		pci_read_config_dword(pdev, offset, &cap);
 
+		pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
+
 		switch (cap & 0xff) {
 		case 1:
+			pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
 			ehci_bios_handoff(pdev, op_reg_base, cap, offset);
 			break;
 		case 0: /* Illegal reserved cap, set cap=0 so we exit */
