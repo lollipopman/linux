@@ -881,7 +881,9 @@ static void ehci_bios_handoff(struct pci_dev *pdev,
 		 * set for any other reason than forcing a BIOS
 		 * handoff..
 		 */
+		pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
 		pci_write_config_byte(pdev, offset + 3, 1);
+		pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
 	}
 
 	pr_err("DEBUG: Passed %s %d \n",__FUNCTION__,__LINE__);
