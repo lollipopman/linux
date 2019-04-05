@@ -907,7 +907,7 @@ static void ehci_bios_handoff(struct pci_dev *pdev,
 		 */
 		if (try_handoff)
 			dev_warn(&pdev->dev,
-				 "EHCI: BIOS handoff failed (BIOS bug?) %08x\n",
+				 "EHCI: HELLO BIOS handoff failed (BIOS bug?) %08x\n",
 				 cap);
 		pci_write_config_byte(pdev, offset + 2, 0);
 	}
